@@ -3,8 +3,11 @@ import matplotlib.pyplot as plt
 
 """ Начало считывания данных """
 
-fig = plt.figure(figsize=(8, 8),dpi=100)
-ax = fig.add_subplot(111)
+fig1 = plt.figure(figsize=(8, 8),dpi=100)
+ax1 = fig1.add_subplot(111)
+
+fig2 = plt.figure(figsize=(8, 8),dpi=100)
+ax2 = fig2.add_subplot(111)
 
 # Считываем парамтры
 f = open("Parametrs.txt")
@@ -26,7 +29,10 @@ y_max = float(Arr[4]) # Максимальное значение y для ок�
 
 mean = [float(Arr[5]), float(Arr[6])] # Матрица среднего
 
-Cov = [[float(f[0][0]), float(f[0][2])], [float(f[1][0]), float(f[1][2])]] # Матрица ковариации
+f1 = f[0].split(" ")
+f2 = f[1].split(" ")
+
+Cov = [[float(f1[0]), float(f1[1])], [float(f2[0]), float(f2[1])]] # Матрица ковариации
 
 """ Конец считывания данных """
 
@@ -42,6 +48,8 @@ class Square:
         self.points[2] = Rotate.dot(self.points[1])
         self.points[3] = Rotate.dot(self.points[2])
 
+        self.centre = v0
+
         for v in self.points:
             v += v0
         pass
@@ -52,17 +60,22 @@ class Square:
             ax.plot(x1, y1, color=col)
         pass
 
-def Generation():
+def Square_Gen():
     x, y = np.random.multivariate_normal(mean, Cov).T
     angle = np.random.rand() * 2 * np.pi
 
-    return Square(np.array(x, y), angle)
+    ax2.plot(x, y, 'x')
+    ax2.axis('equal')
+
+    return Square(np.array([[x], [y]]), angle)
+
 
 squares = []
 for i in range(100):
-    squares.append(Generation())
+    squares.append(Square_Gen())
 
 for sq in squares:
-    sq.Print('r', ax)
+    sq.Print('r', ax1)
+
 
 plt.show()
