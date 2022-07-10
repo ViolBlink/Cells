@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+# import Tlac/src/Square.py
 
 """ Начало считывания данных """
 
@@ -60,19 +61,37 @@ class Square:
             ax.plot(x1, y1, color=col)
         pass
 
-def Square_Gen():
-    x, y = np.random.multivariate_normal(mean, Cov).T
-    angle = np.random.rand() * 2 * np.pi
+def leng(v1, v2):
+    return np.sqrt((v1[0] - v2[0]) ** 2 + (v1[1] - v2[1]) ** 2)
 
-    ax2.plot(x, y, 'x')
-    ax2.axis('equal')
+def Squares_Gen(len: int):
 
-    return Square(np.array([[x], [y]]), angle)
+    squares = []
+    i = 0
+
+    while (i < len):
+        x, y = np.random.multivariate_normal(mean, Cov).T
+        v0 = np.array([[x], [y]])
+        angle = np.random.rand() * 2 * np.pi
+
+        flag = 1
+
+        for square in squares:
+            if leng(v0, square.centre) < 2 * a:
+                flag = 0
+                break
+        
+        if (flag == 1):
+            ax2.plot(x, y, 'x')
+            ax2.axis('equal')
+
+            squares.append(Square(np.array([[x], [y]]), angle))
+            i += 1
+
+    return squares
 
 
-squares = []
-for i in range(100):
-    squares.append(Square_Gen())
+squares = Squares_Gen(30)
 
 for sq in squares:
     sq.Print('r', ax1)
