@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.stats as sc
 import matplotlib.pyplot as plt
 # import Tlac/src/Square.py
 
@@ -64,7 +65,7 @@ class Square:
 def leng(v1, v2):
     return np.sqrt((v1[0] - v2[0]) ** 2 + (v1[1] - v2[1]) ** 2)
 
-def Squares_Gen(len: int):
+def Normal_Squares_Gen(len: int):
 
     squares = []
     i = 0
@@ -90,8 +91,33 @@ def Squares_Gen(len: int):
 
     return squares
 
+def Cauchy_Squares_Gen(amaunt: int):
+    squares = []
+    i = 0
 
-squares = Squares_Gen(30)
+    while (i < amaunt):
+        x, y = sc.cauchy.rvs(loc=0, scale=1), sc.cauchy.rvs(loc=0, scale=1)
+        v0 = np.array([[x], [y]])
+        angle = np.random.rand() * 2 * np.pi
+
+        flag = 1
+
+        for square in squares:
+            if leng(v0, square.centre) < 2 * a:
+                flag = 0
+                break
+        
+        if (flag == 1):
+            ax2.plot(x, y, 'x')
+            ax2.axis('equal')
+
+            squares.append(Square(np.array([[x], [y]]), angle))
+            i += 1
+
+    return squares
+
+
+squares = Cauchy_Squares_Gen(100)
 
 for sq in squares:
     sq.Print('r', ax1)
