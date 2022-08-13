@@ -35,16 +35,22 @@ def Closest(x, y):
 
     vx = X[0]
     vy = Y[0]
+    ix = 0
+    iy = 0
 
     for fx in X:
         if (np.abs(x - fx) < np.abs(x - vx)):
             vx = fx
+            ix += 1
 
     for fy in Y:
         if (np.abs(y - fy) < np.abs(y - vy)):
             vy = fy
+            iy += 1
 
-    return np.array([[vx], [vy]])
+
+    return np.array([[vx], [vy]]), [ix, iy]
+    
 
 def leng(v1, v2):
     return np.sqrt((v1[0] - v2[0]) ** 2 + (v1[1] - v2[1]) ** 2)

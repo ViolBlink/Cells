@@ -15,6 +15,11 @@ with open("Parametres.json") as q:
     f = json.load(q)
 
 a = float(f["GeneralParametrs"][0]["a"])
+Nx = int(f["GeneralParametrs"][0]["Nx"])
+Ny = int(f["GeneralParametrs"][0]["Ny"])
+
+Field = [[0] * Nx for _ in range(Ny)]
+
 mean = [float(f["Normal"][0]["x0"]), float(f["Normal"][0]["y0"])] # Матрица среднего
 
 f = f["Normal"][0]["Cov"].split("\n")
@@ -33,15 +38,15 @@ def Squares_Gen(len: int):
 
     while (i < len):
         x, y = np.random.multivariate_normal(mean, Cov).T
-        v0 = lib.Closest(x, y)
+        v0, n = lib.Closest(x, y)
         angle = np.random.rand() * 2 * np.pi
         
-        flag = 1
+        if(Field[n[1]][n[0]] == 0):
+            flag = 1
+            Field[n[1]][n[0]] = 1
 
-        for square in squares:
-            if lib.leng(v0, square.centre) < 2 * a:
-                flag = 0
-                break
+        else: 
+            flag = 0
         
         if (flag == 1):
             ax2.plot(v0[0][0], v0[1][0], 'x', color='r')
@@ -54,7 +59,7 @@ def Squares_Gen(len: int):
 
 
 lib.AddCentres(ax2)
-squares = Squares_Gen(5)
+squares = Squares_Gen(50)
 
 
 for sq in squares:
