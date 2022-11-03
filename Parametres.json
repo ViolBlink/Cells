@@ -6,10 +6,10 @@
         "x_max": "100",
         "y_min": "-100",
         "y_max": "100",
-        "Nx": 100,
-        "Ny": 100,
+        "Nx": 50,
+        "Ny": 50,
         "Angle_Error": "5",
-        "Count": 250
+        "Count": 50
     }
     ],
     "Normal":

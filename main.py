@@ -1,4 +1,3 @@
-import numpy as np
 import matplotlib.pyplot as plt
 import lib
 import json
@@ -7,16 +6,21 @@ import json
 fig1 = plt.figure(figsize=(8, 8),dpi=100)
 ax1 = fig1.add_subplot(111)
 
+""" Создание прототипа для картинки"""
+fig = plt.figure(figsize=(8, 8),dpi=100)
+ax = fig.add_subplot(111)
+ax.set_title('After')
+"""                                 """
+
 with open("Parametres.json") as q:
     f = json.load(q)
-Amaunt = int(f["GeneralParametrs"][0]["Count"])
+Amount = int(f["GeneralParametrs"][0]["Count"])
 """ Конец считывания данных """
 
-squares = lib.Squares_Gen(Amaunt)
+lib.Squares_Gen(Amount, ax1)
+lib.ShowSquare(ax1)
+lib.Disp()
 
-
-for sq in squares:
-    sq.Print('r', ax1)
-
+lib.ShowSquare(ax)
 
 plt.show()

@@ -2,45 +2,48 @@ import numpy as np
 import matplotlib.pyplot as plt
 import json
 
-fig = plt.figure(figsize=(8, 8),dpi=100)
-ax = fig.add_subplot(111)
+""" Считывание параметров   """
+with open("Parametres.json") as FileOfParametrs:
+    Parametrs = json.load(FileOfParametrs)
 
-# Считываем парамтры
-with open("Parametres.json") as q:
-    f = json.load(q)
+# Общие параметры
+Gen_Param = Parametrs["GeneralParametrs"]
+# Параметры распределения
+Normal_Param = Parametrs["Normal"]
 
-file_Gen = f["GeneralParametrs"]
-file_Normal = f["Normal"]
+a = float(Gen_Param[0]["a"])                                                             # Размер диогонали
+x_min = float(Gen_Param[0]["x_min"])                                                     # Минимальное значение х для окна
+y_min = float(Gen_Param[0]["y_min"])                                                     # Максимальное значение х для окна
+y_max = float(Gen_Param[0]["y_max"])                                                     # Максимальное значение y для окна
+x_max = float(Gen_Param[0]["x_max"])                                                     # Минимальное значение y для окна
+Nx = Gen_Param[0]["Nx"]                                                                  # Число центров по x
+Ny = Gen_Param[0]["Ny"]                                                                  # Число центров по y
 
-a = float(file_Gen[0]["a"])  # Размер диогонали
-x_min = float(file_Gen[0]["x_min"]) # Минимальное значение х для окна
-y_min = float(file_Gen[0]["y_min"]) # Максимальное значение х для окна
-y_max = float(file_Gen[0]["y_max"]) # Максимальное значение y для окна
-x_max = float(file_Gen[0]["x_max"]) # Минимальное значение y для окна
-Nx = file_Gen[0]["Nx"] # Число центров по x
-Ny = file_Gen[0]["Ny"] # Число центров по y
+mean = [float(Normal_Param[0]["x0"]), float(Normal_Param[0]["y0"])]                      # Матрица среднего
 
-mean = [float(file_Normal[0]["x0"]), float(file_Normal[0]["y0"])] # Матрица среднего
-
-f = file_Normal[0]["Cov"].split("\n")
+f = Normal_Param[0]["Cov"].split("\n")
 f1 = f[0].split(" ")
 f2 = f[1].split(" ")
 
-Cov = [[float(f1[0]), float(f1[1])], [float(f2[0]), float(f2[1])]] # Матрица ковариации
+Cov = [[float(f1[0]), float(f1[1])], [float(f2[0]), float(f2[1])]]                      # Матрица ковариации
 
 
-Field = [[0] * Nx for _ in range(Ny)] # Поля для заполнения притяжения
+Field = [[0] * Nx for _ in range(Ny)]                                                   # Поля для заполнения притяжения
+Squares = []                                                                            # Массив, в котором хранится центр и угол
+IndOfSquares = []                                                                       # Массив, в котором хранятся индексы ячейки
 
 hx = float(x_max - x_min)/Nx
 hy = float(y_max - y_min)/Ny
 
 X = np.linspace(x_min, x_max, Nx)
 Y = np.linspace(y_min, y_max, Ny)
+""" Конец считывания параметров """
 
 def AddCentres(ax):
-
+    """ Функция, которая рисует центры ячеек """
     X = np.linspace(x_min, x_max, Nx)
     Y = np.linspace(y_min, y_max, Ny)
+
     for x in X:
         for y in Y:
             ax.plot(x, y, 'o', color='b')
@@ -64,115 +67,130 @@ def Closest(x, y):
             vy = fy
             iy += 1
 
+    return [ix, iy]
 
-    return np.array([[vx], [vy]]), [ix, iy]
-    
 def leng(v1, v2):
-    """Функция, возвращающая длину между двумя векторами"""
-    return np.sqrt((v1[0] - v2[0]) ** 2 + (v1[1] - v2[1]) ** 2)
+    """Функция, возвращающая длину разности двух векторов"""
+    return np.sqrt((X[v1[0]] - Y[v2[0]]) ** 2 + (X[v1[1]] - Y[v2[1]]) ** 2)
 
-def Grav():
-    """"Функция, которая по заданому полю расположений возвращает графф смещений"""
-    fil = [[0] * Nx for _ in range(Ny)]
-    
-    for x in range(Nx):
-        for y in range(Ny):
-            pos = [x, y] # Рассматриваеммая точка
-            Position = [-1, -1]
+def Norm(v):
+    return np.sqrt(v[0][0] ** 2 + v[1][0] ** 2)
 
+def Squares_Gen(len: int, ax):
+    """Функция, которая генерирует len квадратов"""
+    #   Вроде можно убрать, но надо будет проверить
+    i = 1
 
-            if(Field[x][y]):
-
-                Pre_Possible_positions = [Move([x, y], [1, 0]), Move([x, y], [0, 1]), # Смещаемся в четыре стороны и создаем массив
-                Move([x, y], [-1, 0]), Move([x, y], [0, -1])]                         # в котором хранятся возможные точки
-
-                Possible_positions = []                                                             # Создаем массив фактических точек для смещения
-
-                for Tile in Pre_Possible_positions:                                                    # Заполняем массив
-                    if(Tile != [-1, -1]):
-                        Possible_positions.append(Tile)
-                                                                                                    # Находим ближайшую точку для смещения
-                l = 0
-
-                for Tile in Possible_positions:
-                    if(Tile == Possible_positions[0]):
-                        l = leng(pos, Tile)
-                        Position = Tile
-                    else:
-                        if(leng(pos, Tile) < l):
-                            l = leng(pos, Tile)
-                            Position = Tile
-
-            fil[x][y] = Position                                                                    # Создаем графф смещений
-    return fil
-
-def Move(start, direction):
-    """Возвращает ближайшую от start точку в направлении, указаным direction"""
-    x = start[0] + direction[0]
-    y = start[1] + direction[1]
-
-    while((x < Nx) and (x >= 0) and (y < Ny) and (y > 0)):
-        if((Field[x][y] != 0) and (np.abs(start[0] - x) > 1) and (np.abs(start[0] - y) > 1)): 
-            return [x, y]
-        x = x + direction[0]
-        y = y + direction[1]
-    return [-1, -1]
-
-def GTD(Graph, pos):
-    """Обходит граф"""
-    
-    if(pos == Graph[Graph[pos[0], pos[1]][0], Graph[pos[0], pos[1]][1]]):
-        return 
-
-    else:
-        GTD(Graph, Graph[pos[0], pos[1]])
-
-def Squares_Gen(len: int):
-
-    squares = []
-    i = 0
-
-    while (i < len):
+    while (i <= len):
         x, y = np.random.multivariate_normal(mean, Cov).T
-        v0, n = Closest(x, y)
-        # v0 = [[x], [y]]
+        n = Closest(x, y)
         angle = np.pi/4
         
         if(Field[n[1]][n[0]] == 0):
             flag = 1
-            Field[n[1]][n[0]] = 1
+            Field[n[1]][n[0]] = i                                                       # В поле, где есть квадрат пишется
+                                                                                        # номер квадрата +1
 
         else: 
             flag = 0
         
         if (flag == 1):
-            ax.plot(v0[0][0], v0[1][0], 'x', color='r')
+            ax.plot(X[n[0]], Y[n[1]], 'x', color='r')
             ax.axis('equal')
 
-            squares.append(Square(np.array([[v0[0][0]], [v0[1][0]]]), angle))
+            Squares.append([[n[0], n[1]], angle, 0, []])
+            IndOfSquares.append([[n[0]], [n[1]]])
             i += 1
 
-    return squares
-class Square:
-    def __init__(self, v0, angle: float) -> None:
-        Rotate = np.array([[0, 1], 
-                            [-1, 0]])
-        self.points = [np.array([[0], [0]])] * 4
+def PaintSquare(ind, angle, col, ax):
+    """Функция, которая рисует квадрат с центрм r0, углом поворота angle"""
+    Rotate = np.array([[0, 1], 
+                    [-1, 0]])
 
-        self.points[0] = np.array([[a*np.cos(angle)], [a*np.sin(angle)]])
+    points = [np.array([[0], [0]])] * 4
 
-        self.points[1] = Rotate.dot(self.points[0])
-        self.points[2] = Rotate.dot(self.points[1])
-        self.points[3] = Rotate.dot(self.points[2])
+    points[0] = np.array([[a*np.cos(angle)], [a*np.sin(angle)]])
+    points[1] = Rotate.dot(points[0])
+    points[2] = Rotate.dot(points[1])
+    points[3] = Rotate.dot(points[2])
 
-        self.centre = v0
+    r0 = [[X[ind[0]]], [Y[ind[1]]]]
+    for point in points:
+        point += r0
+    
+    for i in range(4):
+            x1, y1 = [points[i][0][0], points[(i + 1) % 4][0][0]], [points[i][1][0], points[(i + 1) % 4][1][0]]
+            ax.plot(x1, y1, color=col)
 
-        for v in self.points:
-            v += v0
-        pass
+def ShowSquare(ax):
 
-    def Print(self, col, axe):
-        for i in range(4):
-            x1, y1 = [self.points[i][0][0], self.points[(i + 1) % 4][0][0]], [self.points[i][1][0], self.points[(i + 1) % 4][1][0]]
-            axe.plot(x1, y1, color=col)
-        pass
+    for square in Squares:
+        PaintSquare(square[0], square[1], 'r', ax)
+
+def Move(start, direction):
+    """Возвращает ближайшую от start точку в направлении, указаным direction"""
+    x = start[0][0] + direction[0][0]
+    y = start[1][0] + direction[1][0]
+
+    while((x < Nx) and (x >= 0) and (y < Ny) and (y > 0)):
+        if((Field[x][y] != 0) and ((np.abs(start[0][0] - x) > 1) or (np.abs(start[1][0] - y) > 1))): 
+            return Field[x][y]
+        x = x + direction[0][0]
+        y = y + direction[1][0]
+    return 0
+
+def Displase():
+    """Функция, находящая смещение для квадратов"""
+    ind = 1
+    for i in range(len(Squares)):
+
+        square = Squares[i]
+        ind_of_square = IndOfSquares[i]
+        # Текущее положение в виде столбца #
+
+        # Пока без проверки на 0 и нахождения минимального #
+        Pre_Possible_positions = [Move(ind_of_square, [[0], [1]]), Move(ind_of_square, [[1], [0]]),
+        Move(ind_of_square, [[0], [-1]]), Move(ind_of_square, [[-1], [0]])]
+        
+        Possible_positions = []                                                          # Создаем массив фактических точек для смещения
+
+        for Index_Of_Tile in Pre_Possible_positions:                                     # Заполняем массив
+            if(Index_Of_Tile != 0):
+                Possible_positions.append(Index_Of_Tile)
+
+        for Index_Of_Tile in Possible_positions:
+            if(Index_Of_Tile == Possible_positions[0]):
+                square[2] = Index_Of_Tile
+                continue
+            
+            if(leng(square[0], Squares[Index_Of_Tile - 1][0]) < leng(square[0], Squares[square[2] - 1][0])):
+                square[2] = Index_Of_Tile
+        
+        # Squares[square[2]][4].append(ind)
+        ind += 1 
+    pass
+    # Копия массива квадратов
+    
+    
+
+    pass
+
+def Disp():
+    Displase()
+
+    for sq in Squares:
+        if(sq[2] != 0):
+            dis_x = Squares[sq[2] - 1][0] - sq[0][0][0]
+            dis_y = Squares[sq[2] - 1][0][1][0] - sq[0][1][0]
+
+            dis = [[dis_x], [dis_y]]
+
+            n_dis = dis/Norm(dis)
+
+            dis[0][0] = dis[0][0] - n_dis[0][0]
+            dis[1][0] = dis[1][0] - n_dis[1][0]
+
+            closest = Closest(dis[0][0], dis[1][0])
+
+            sq[0][0] = X[closest[0]]
+            sq[1][0] = Y[closest[1]]
