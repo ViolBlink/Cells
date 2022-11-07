@@ -98,7 +98,7 @@ def Squares_Gen(len: int, ax):
             ax.plot(X[n[0]], Y[n[1]], 'x', color='r')
             ax.axis('equal')
 
-            Squares.append([[n[0], n[1]], angle, 0, []])
+            Squares.append([[n[0], n[1]], angle, 0])
             IndOfSquares.append([[n[0]], [n[1]]])
             i += 1
 
@@ -134,10 +134,10 @@ def Move(start, direction):
 
     while((x < Nx) and (x >= 0) and (y < Ny) and (y > 0)):
         if((Field[x][y] != 0) and ((np.abs(start[0][0] - x) > 1) or (np.abs(start[1][0] - y) > 1))): 
-            return Field[x][y]
+            return [Field[x][y], [direction[0][0], direction[1][0]]]
         x = x + direction[0][0]
         y = y + direction[1][0]
-    return 0
+    return [0, 0]
 
 def Displase():
     """Функция, находящая смещение для квадратов"""
@@ -148,49 +148,50 @@ def Displase():
         ind_of_square = IndOfSquares[i]
         # Текущее положение в виде столбца #
 
-        # Пока без проверки на 0 и нахождения минимального #
         Pre_Possible_positions = [Move(ind_of_square, [[0], [1]]), Move(ind_of_square, [[1], [0]]),
         Move(ind_of_square, [[0], [-1]]), Move(ind_of_square, [[-1], [0]])]
         
         Possible_positions = []                                                          # Создаем массив фактических точек для смещения
 
         for Index_Of_Tile in Pre_Possible_positions:                                     # Заполняем массив
-            if(Index_Of_Tile != 0):
+            if(Index_Of_Tile[0] != 0):
                 Possible_positions.append(Index_Of_Tile)
 
+        dir = [0, 0]
         for Index_Of_Tile in Possible_positions:
-            if(Index_Of_Tile == Possible_positions[0]):
-                square[2] = Index_Of_Tile
+            if(Index_Of_Tile[0] == Possible_positions[0][0]):
+                square[2] = Index_Of_Tile[0]
+                dir = Index_Of_Tile[1]
                 continue
             
-            if(leng(square[0], Squares[Index_Of_Tile - 1][0]) < leng(square[0], Squares[square[2] - 1][0])):
-                square[2] = Index_Of_Tile
+            if(leng(square[0], Squares[Index_Of_Tile[0] - 1][0]) < leng(square[0], Squares[square[2] - 1][0])):
+                square[2] = Index_Of_Tile[0]
+                dir = Index_Of_Tile[1]
         
-        # Squares[square[2]][4].append(ind)
-        ind += 1 
+        square.append(dir)
+        ind += 1
     pass
     # Копия массива квадратов
-    
-    
 
-    pass
+def FreedomCheck(ix, iy, ind):
+    for i in range(len(Squares)):
+        if((Squares[i][0][0] == ix) and (Squares[i][0][1] == iy) and (i != ind)):
+            return i
+    return -1
 
 def Disp():
     Displase()
 
-    for sq in Squares:
+    for i in range(len(Squares)):
+        sq = Squares[i]
         if(sq[2] != 0):
-            dis_x = Squares[sq[2] - 1][0] - sq[0][0][0]
-            dis_y = Squares[sq[2] - 1][0][1][0] - sq[0][1][0]
 
-            dis = [[dis_x], [dis_y]]
+            dis_x = Squares[sq[2] - 1][0][0] + sq[3][0]
+            dis_y = Squares[sq[2] - 1][0][1] + sq[3][1]
 
-            n_dis = dis/Norm(dis)
+            while(FreedomCheck(dis_x, dis_y, i) != -1):
+                dis_x = Squares[FreedomCheck(dis_x, dis_y, i) - 1][0][0] + sq[3][0]
+                dis_y = Squares[FreedomCheck(dis_x, dis_y, i) - 1][0][1] + sq[3][1]
 
-            dis[0][0] = dis[0][0] - n_dis[0][0]
-            dis[1][0] = dis[1][0] - n_dis[1][0]
-
-            closest = Closest(dis[0][0], dis[1][0])
-
-            sq[0][0] = X[closest[0]]
-            sq[1][0] = Y[closest[1]]
+            sq[0][0] = dis_x
+            sq[0][1] = dis_y
